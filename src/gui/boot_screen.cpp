@@ -1,7 +1,7 @@
 #include "boot_screen.h"
 
-#include <thread>
 #include <spdlog/spdlog.h>
+#include <thread>
 
 #include "../constants.h"
 #include <src/core/lv_obj_pos.h>
@@ -9,7 +9,8 @@
 #include <src/misc/lv_anim.h>
 #include <src/widgets/lottie/lv_lottie.h>
 
-void boot_screen::start() {
+void boot_screen::start()
+{
     spdlog::debug("Presenting launch options");
     lvgl_renderer_inst->set_global_refresh_hint(COLOR_FAST);
     setup_animation();
@@ -27,13 +28,15 @@ void boot_screen::start() {
     lvgl_renderer_inst->refresh({ 0, 0 }, { SCREEN_WIDTH, SCREEN_HEIGHT }, FULL);
 }
 
-boot_screen::~boot_screen() {
-    for (auto obj: deletion_queue) {
+boot_screen::~boot_screen()
+{
+    for (auto obj : deletion_queue) {
         lv_obj_delete(obj);
     }
 }
 
-void boot_screen::setup_animation() {
+void boot_screen::setup_animation()
+{
     welcome_json = get_resource_file("animations/hello.json");
 
     auto lottie_obj = lv_lottie_create(lv_screen_active());
@@ -50,7 +53,8 @@ void boot_screen::setup_animation() {
     deletion_queue.push_back(lottie_obj);
 }
 
-lv_obj_t *boot_screen::create_boot_option(const char *title) {
+lv_obj_t* boot_screen::create_boot_option(const char* title)
+{
     auto btn = lv_obj_create(lv_screen_active());
     lv_obj_set_size(btn, LV_PCT(40), LV_SIZE_CONTENT);
     lv_obj_set_style_border_color(btn, lv_color_black(), 0);
@@ -83,30 +87,39 @@ lv_obj_t *boot_screen::create_boot_option(const char *title) {
     return btn;
 }
 
-void boot_screen::setup_boot_selection() {
+void boot_screen::setup_boot_selection()
+{
     auto remarkable = create_boot_option("reMarkable OS");
-    lv_obj_align(remarkable, LV_ALIGN_BOTTOM_MID, 0, -425);
+    lv_obj_align(remarkable, LV_ALIGN_BOTTOM_MID, 0, -625);
 
     auto bifrost = create_boot_option("Bifrost");
+    lv_obj_align(bifrost, LV_ALIGN_BOTTOM_MID, 0, -400);
+
+    auto tiago = create_boot_option("Tiago Test");
     lv_obj_align(bifrost, LV_ALIGN_BOTTOM_MID, 0, -200);
 
     instance = shared_from_this();
 
-    lv_obj_add_event_cb(remarkable, [](lv_event_t *event) {
+    lv_obj_add_event_cb(remarkable, [](lv_event_t* event) {
         spdlog::debug("Launching reMarkable OS");
         if (auto instance = boot_screen::instance.lock()) {
             instance->state = RM_STOCK_OS;
             instance->cv.notify_one();
-        }
-    }, LV_EVENT_CLICKED, nullptr);
+        } }, LV_EVENT_CLICKED, nullptr);
 
-    lv_obj_add_event_cb(bifrost, [](lv_event_t *event) {
+    lv_obj_add_event_cb(bifrost, [](lv_event_t* event) {
         spdlog::debug("Launching Bifrost");
         if (auto instance = boot_screen::instance.lock()) {
             instance->state = BIFROST;
             instance->cv.notify_one();
-        }
-    }, LV_EVENT_CLICKED, nullptr);
+        } }, LV_EVENT_CLICKED, nullptr);
+
+    lv_obj_add_event_cb(bifrost, [](lv_event_t* event) {
+        spdlog::debug("Launching Tiago Test");
+        if (auto instance = boot_screen::instance.lock()) {
+            instance->state = TIAGO_TEST;
+            instance->cv.notify_one();
+        } }, LV_EVENT_CLICKED, nullptr);
 }
 
 std::weak_ptr<boot_screen> boot_screen::instance;
