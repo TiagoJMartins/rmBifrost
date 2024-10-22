@@ -8,8 +8,8 @@
 #include <QPainter>
 #include <spdlog/spdlog.h>
 
-#include "hook_typedefs.h"
 #include "gui/boot_screen.h"
+#include "hook_typedefs.h"
 
 std::weak_ptr<bifrost_impl> bifrost_impl::instance;
 
@@ -44,18 +44,29 @@ void bifrost_impl::start_bifrost(QObject* epfb_inst)
     // call lvgl_renderer_inst->start() in a separate thread
     auto renderer_thread = std::thread([this] { lvgl_renderer_inst->start(); });
 
-    auto boot_screen_inst = std::make_shared<boot_screen>(lvgl_renderer_inst);
-    auto boot_screen_thread = std::thread([&] { boot_screen_inst->start(); });
+    while (true) {
+        auto boot_screen_inst = std::make_shared<boot_screen>(lvgl_renderer_inst);
+        auto boot_screen_thread = std::thread([&] { boot_screen_inst->start(); });
 
-    boot_screen_thread.join();
+        boot_screen_thread.join();
 
-    if (boot_screen_inst->state == RM_STOCK_OS) {
-        lvgl_renderer_inst->stop();
-        renderer_thread.join();
+        switch (boot_screen_inst->state) {
+        case BIFROST:
+            spdlog::info("nothing yet");
+            continue;
+        case RM_STOCK_OS:
+            lvgl_renderer_inst->stop();
+            renderer_thread.join();
 
-        spdlog::debug("Relinquished control flow to the stock OS");
-        hook_passthrough = true;
-        return;
+            spdlog::info("Relinquished control flow to the stock OS");
+            hook_passthrough = true;
+            return;
+        case REFRESH:
+            lvgl_renderer_inst->refresh({ 0, 0 }, { SCREEN_WIDTH, SCREEN_HEIGHT }, FULL);
+            continue;
+        default:
+            break;
+        }
     }
 
     // TODO: homebrew apps

@@ -9,8 +9,8 @@
 enum launch_state {
     IN_FLIGHT,
     RM_STOCK_OS,
+    REFRESH,
     BIFROST,
-    TIAGO_TEST,
 };
 
 class boot_screen : public std::enable_shared_from_this<boot_screen> {

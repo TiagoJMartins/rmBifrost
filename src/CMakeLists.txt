@@ -18,6 +18,8 @@ add_library(rmBifrost SHARED entrypoint.cpp
         ${lvgl_sources}
         gui/boot_screen.cpp
         gui/boot_screen.h
+        gui/hello_screen.cpp
+        gui/hello_screen.h
 
         # fonts
         resources/fonts/ebgaramond_48.c

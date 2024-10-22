@@ -4,6 +4,8 @@ set -o pipefail
 
 # git submodule update --init --recursive
 
+RMPP_HOST=rmpp-remote
+
 docker run \
   --rm -it \
   -v "$PWD:/src" -w /src \
@@ -11,11 +13,11 @@ docker run \
   --entrypoint /src/build-entrypoint.sh \
   eeems/remarkable-toolchain:latest-rmpp
 
-scp build/lib/libbifrost.so rmpp:~/
+scp build/lib/libbifrost.so "$RMPP_HOST":~/
 
-xochitl_pid=$(ssh rmpp "pgrep xochitl")
+xochitl_pid=$(ssh "$RMPP_HOST" "pgrep xochitl" || true)
 if [ -n "$xochitl_pid" ]; then
-  ssh rmpp "kill $xochitl_pid"
+  ssh "$RMPP_HOST" "kill $xochitl_pid"
 fi
 
-ssh rmpp "LD_PRELOAD=./libbifrost.so /usr/bin/xochitl --system"
+ssh "$RMPP_HOST" "LD_PRELOAD=./libbifrost.so /usr/bin/xochitl --system"

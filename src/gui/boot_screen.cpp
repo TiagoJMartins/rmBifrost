@@ -1,4 +1,5 @@
 #include "boot_screen.h"
+#include "hello_screen.h" // Include the header for the new screen
 
 #include <spdlog/spdlog.h>
 #include <thread>
@@ -21,10 +22,25 @@ void boot_screen::start()
     setup_boot_selection();
 
     // wait for the user to select an option
-    std::unique_lock<std::mutex> lk(cv_m);
-    cv.wait(lk, [this] { return state != IN_FLIGHT; });
-    lk.unlock();
+    while (true) {
+        std::unique_lock<std::mutex> lk(cv_m);
+        cv.wait(lk, [this] { return state != IN_FLIGHT; });
+        lk.unlock();
 
+        if (state == RM_STOCK_OS) {
+            spdlog::info("Launching reMarkable OS");
+            break;
+        }
+        else if (state == REFRESH) {
+            spdlog::info("Refreshing the screen");
+            lvgl_renderer_inst->refresh({ 0, 0 }, { SCREEN_WIDTH, SCREEN_HEIGHT }, FULL);
+        }
+        else if (state == BIFROST) {
+            spdlog::info("Launching Bifrost");
+            break;
+        }
+    }
+    
     lvgl_renderer_inst->refresh({ 0, 0 }, { SCREEN_WIDTH, SCREEN_HEIGHT }, FULL);
 }
 
@@ -95,8 +111,11 @@ void boot_screen::setup_boot_selection()
     auto bifrost = create_boot_option("Bifrost");
     lv_obj_align(bifrost, LV_ALIGN_BOTTOM_MID, 0, -400);
 
-    auto tiago = create_boot_option("Tiago Test");
-    lv_obj_align(bifrost, LV_ALIGN_BOTTOM_MID, 0, -200);
+    auto remarkableEnhanced = create_boot_option("reMarkable OS (enhanced)");
+    lv_obj_align(remarkableEnhanced, LV_ALIGN_BOTTOM_MID, 0, -200);
+
+    auto hello_world_btn = create_boot_option("Hello World Screen");
+    lv_obj_align(hello_world_btn, LV_ALIGN_BOTTOM_MID, 0, 0); // Adjust position as needed
 
     instance = shared_from_this();
 
@@ -108,16 +127,16 @@ void boot_screen::setup_boot_selection()
         } }, LV_EVENT_CLICKED, nullptr);
 
     lv_obj_add_event_cb(bifrost, [](lv_event_t* event) {
-        spdlog::debug("Launching Bifrost");
+        spdlog::debug("Refreshing the screen");
         if (auto instance = boot_screen::instance.lock()) {
-            instance->state = BIFROST;
+            instance->state = REFRESH;
             instance->cv.notify_one();
         } }, LV_EVENT_CLICKED, nullptr);
 
     lv_obj_add_event_cb(bifrost, [](lv_event_t* event) {
-        spdlog::debug("Launching Tiago Test");
+        spdlog::debug("Launching Bifrost");
         if (auto instance = boot_screen::instance.lock()) {
-            instance->state = TIAGO_TEST;
+            instance->state = BIFROST;
             instance->cv.notify_one();
         } }, LV_EVENT_CLICKED, nullptr);
 }
