@@ -4,9 +4,11 @@
 #include <iostream>
 #include <thread>
 
-typedef unsigned int Rgb;                       
+typedef unsigned int Rgb;
 inline constexpr Rgb Rgba(int r, int g, int b, int a)
-{ return ((a & 0xffu) << 24) | ((r & 0xffu) << 16) | ((g & 0xffu) << 8) | (b & 0xffu); }
+{
+    return ((a & 0xffu) << 24) | ((r & 0xffu) << 16) | ((g & 0xffu) << 8) | (b & 0xffu);
+}
 
 int main()
 {
@@ -44,6 +46,5 @@ int main()
     std::cout << "Submitted frame" << std::endl;
 
     std::this_thread::sleep_for(std::chrono::seconds(100));
-
     return 0;
 }

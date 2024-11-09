@@ -1,0 +1,35 @@
+name: docker
+
+on:
+  push:
+    branches: [ main, dev ]
+  pull_request:
+    branches: [ main, dev ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      # https://hub.docker.com/r/eeems/remarkable-toolchain/tags
+      - uses: docker://eeems/remarkable-toolchain:4.0.813-rmpp
+        with:
+          entrypoint: bash
+          args: entrypoint.sh
+
+      - shell: bash
+        run: |
+          mkdir output
+          cp -a \
+            build/lib/ \
+            build/examples/example_app/example_app \
+            output/
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: artifacts
+          path: output

@@ -1,0 +1,25 @@
+[tasks]
+"build:toolchain" = "docker build --platform linux/amd64 -t rmpp-toolchain ."
+
+[tasks."build:ci"]
+run = """
+mkdir -p .act/artifacts
+act push \
+  -P ubuntu-latest=catthehacker/ubuntu:act-latest \
+  --rm \
+  --container-architecture linux/amd64 \
+  --artifact-server-path .act/artifacts \
+  -W .github/workflows/cmake-docker.yaml
+"""
+
+[tasks."upload"]
+depends = ["build:ci"]
+run = """
+rm -rf out
+unzip .act/artifacts/1/artifacts/artifacts.zip -d out
+scp -r out/. root@rmpp:~/rmbifrost/
+"""
+
+[tasks.exec]
+depends = ["build:docker"]
+run = 'docker run -v $PWD:/opt/app -ti rmpp-toolchain -- {{arg(name="command", var=true)}}'
