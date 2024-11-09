@@ -21,7 +21,7 @@ bifrost_client_impl::bifrost_client_impl(std::string application_name, std::stri
     , preferred_swapchain_image_count(swapchain_image_count)
 {
     if (std::getenv(ENV_DEBUG)) {
-        // spdlog::set_level(spdlog::level::debug);
+        spdlog::set_level(spdlog::level::debug);
     }
 }
 

@@ -31,5 +31,8 @@ int main()
     std::cout << "Submitting frame" << std::endl;
     client.submit_frame(image_index, 0, 0, 100, 100, COLOR_FAST);
     std::cout << "Submitted frame" << std::endl;
+
+    // std::cout << "Stopping client" << std::endl;
+    // client.stop();
     return 0;
 }
